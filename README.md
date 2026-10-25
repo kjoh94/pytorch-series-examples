@@ -14,3 +14,5 @@ cd 01-tensor && python example.py
 | 3 | [`03-autograd`](03-autograd/) | [3. Autograd와 추론 모드](https://kjoh94.github.io/blog/2026/10/25/pytorch-03-autograd/) |
 | 4 | [`04-aten-dispatcher`](04-aten-dispatcher/) | [4. ATen과 Dispatcher](https://kjoh94.github.io/blog/2026/10/25/pytorch-04-aten-dispatcher/) |
 | 5 | [`05-privateuse1`](05-privateuse1/) | [5. 커스텀 디바이스 백엔드 (PrivateUse1)](https://kjoh94.github.io/blog/2026/10/25/pytorch-05-privateuse1/) |
+| 6 | [`06-graph-capture`](06-graph-capture/) | [6. 그래프 캡처 — FX·Dynamo·graph break](https://kjoh94.github.io/blog/2026/10/25/pytorch-06-graph-capture/) |
+| 7 | [`07-torch-export`](07-torch-export/) | [7. torch.export와 Core ATen IR](https://kjoh94.github.io/blog/2026/10/25/pytorch-07-torch-export/) |

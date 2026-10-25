@@ -12,3 +12,5 @@ cd 01-tensor && python example.py
 | 1 | [`01-tensor`](01-tensor/) | [1. Tensor의 정체 — storage·stride·view](https://kjoh94.github.io/blog/2026/10/25/pytorch-01-tensor/) |
 | 2 | [`02-module-state-dict`](02-module-state-dict/) | [2. nn.Module과 state_dict](https://kjoh94.github.io/blog/2026/10/25/pytorch-02-module-state-dict/) |
 | 3 | [`03-autograd`](03-autograd/) | [3. Autograd와 추론 모드](https://kjoh94.github.io/blog/2026/10/25/pytorch-03-autograd/) |
+| 4 | [`04-aten-dispatcher`](04-aten-dispatcher/) | [4. ATen과 Dispatcher](https://kjoh94.github.io/blog/2026/10/25/pytorch-04-aten-dispatcher/) |
+| 5 | [`05-privateuse1`](05-privateuse1/) | [5. 커스텀 디바이스 백엔드 (PrivateUse1)](https://kjoh94.github.io/blog/2026/10/25/pytorch-05-privateuse1/) |

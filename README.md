@@ -9,6 +9,9 @@ cd 01-tensor && python example.py
 
 | 장 | 폴더 | 블로그 |
 |---|---|---|
+| A | [`00a-tensor-numbers`](00a-tensor-numbers/) | [기초편 A. 텐서를 숫자 상자로](https://kjoh94.github.io/blog/2026/10/31/pytorch-00a-tensor-numbers/) |
+| B | [`00b-linear-forward`](00b-linear-forward/) | [기초편 B. Linear와 순전파](https://kjoh94.github.io/blog/2026/10/31/pytorch-00b-linear-forward/) |
+| C | [`00c-loss-train-loop`](00c-loss-train-loop/) | [기초편 C. loss와 학습 루프](https://kjoh94.github.io/blog/2026/10/31/pytorch-00c-loss-train-loop/) |
 | 1 | [`01-tensor`](01-tensor/) | [1. Tensor의 정체 — storage·stride·view](https://kjoh94.github.io/blog/2026/10/25/pytorch-01-tensor/) |
 | 2 | [`02-module-state-dict`](02-module-state-dict/) | [2. nn.Module과 state_dict](https://kjoh94.github.io/blog/2026/10/25/pytorch-02-module-state-dict/) |
 | 3 | [`03-autograd`](03-autograd/) | [3. Autograd와 추론 모드](https://kjoh94.github.io/blog/2026/10/25/pytorch-03-autograd/) |

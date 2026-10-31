@@ -78,3 +78,39 @@ def write_step(k_new, pos):
 for p in range(3):
     m = write_step(torch.randn(1, H, 1, hd), p)
 print("항상 같은 shape:", k_cache.shape, m.tolist())
+
+
+# ---- 11장 초보자 보강: KV cache 있을 때 vs 없을 때 (결과 같고, 처리량·시간 차이) ----
+if __name__ == "__main__":
+    import time
+    import torch
+    import torch.nn.functional as F
+
+    torch.manual_seed(0); torch.set_num_threads(1)
+    D=256; L=4
+    layers=[torch.nn.Linear(D,3*D) for _ in range(L)]
+    def step(x,cache=None):
+        # x: (T,D) new tokens; cache list of (K,V)
+        new=[]
+        for i,l in enumerate(layers):
+            q,k,v=l(x).chunk(3,-1)
+            if cache: k=torch.cat([cache[i][0],k]); v=torch.cat([cache[i][1],v])
+            new.append((k,v))
+            T=q.shape[0]; S=k.shape[0]
+            m=torch.ones(T,S).tril(S-T).bool()
+            a=(q@k.T/D**0.5).masked_fill(~m,float('-inf')).softmax(-1)
+            x=F.layer_norm(x+a@v,(D,))
+        return x,new
+    prompt=torch.randn(32,D); N=64
+    with torch.no_grad():
+        t=time.perf_counter(); seq=prompt
+        for _ in range(N):
+            y,_=step(seq); seq=torch.cat([seq,y[-1:]])
+        nc=time.perf_counter()-t; out1=seq
+        t=time.perf_counter(); y,c=step(prompt); seq=[y[-1:]]
+        for _ in range(N-1):
+            y,c=step(seq[-1],c); seq.append(y)
+        kc=time.perf_counter()-t
+    d = (out1[32:] - torch.cat(seq)).abs().max().item()
+    print(f"no cache {nc*1000:.0f} ms / KV cache {kc*1000:.0f} ms, max diff {d:.1e}")
+    print("rows processed: no-cache", sum(32 + i for i in range(N)), "/ cache", 32 + N - 1)

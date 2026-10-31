@@ -26,12 +26,15 @@ def chain(x):
 
 x = torch.randn(4_000_000)
 fc = torch.compile(chain)          # Inductor 가 한 커널로 합친다
-fc(x)                              # 첫 호출 = 컴파일
-for name, fn in [("eager", chain), ("compiled", fc)]:
-    t = time.perf_counter()
-    for _ in range(20): fn(x)
-    print(f"{name:9s} {(time.perf_counter() - t) / 20 * 1e3:.2f} ms")
-print("same:", torch.allclose(chain(x), fc(x)))
+try:
+    fc(x)                          # 첫 호출 = 컴파일 (기본 Inductor는 C++ 컴파일러 g++ 필요)
+    for name, fn in [("eager", chain), ("compiled", fc)]:
+        t = time.perf_counter()
+        for _ in range(20): fn(x)
+        print(f"{name:9s} {(time.perf_counter() - t) / 20 * 1e3:.2f} ms")
+    print("same:", torch.allclose(chain(x), fc(x)))
+except Exception as e:
+    print("skip torch.compile timing (no C++ compiler?):", type(e).__name__)
 
 
 # ----------

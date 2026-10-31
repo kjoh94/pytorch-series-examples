@@ -74,3 +74,20 @@ dynamo.reset()
 model = torch.nn.Sequential(torch.nn.Linear(4, 8), torch.nn.ReLU(), torch.nn.Linear(8, 2))
 cm = torch.compile(model, backend=my_backend)
 print(cm(torch.randn(3, 4)).shape)
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31) ----
+# 참고: 기본 backend(inductor)는 CPU에서 C++ 컴파일러가 필요하다. 공부용으로 aot_eager 사용.
+import time
+print("\n== 비유: 한 줄 함수가 연산 목록(그래프)으로 ==")
+def f(x):
+    return torch.relu(x * 2 + 1)
+print(torch.fx.symbolic_trace(f).code)
+
+print("== 첫 호출만 느리다 ==")
+cf = torch.compile(f, backend="aot_eager")
+x = torch.randn(1000)
+for i in range(3):
+    t = time.perf_counter(); cf(x)
+    print(f"{i+1}번째 호출: {time.perf_counter() - t:.3f}s")
+print("결과 같나:", torch.allclose(cf(x), f(x)))

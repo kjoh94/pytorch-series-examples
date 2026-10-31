@@ -87,3 +87,13 @@ lib.impl("scale2", scale2_meta, "Meta")
 print(torch.ops.demo.scale2(torch.ones(3)))
 print(torch.ops.demo.scale2(torch.empty(3, device="meta")).device)
 print(torch._C._dispatch_has_kernel_for_dispatch_key("demo::scale2", "CPU"))
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31) ----
+print("\n== profiler로 aten op 이름 보기 ==")
+import torch.nn as nn
+x = torch.randn(2, 4)
+lin = nn.Linear(4, 3)
+with torch.profiler.profile() as prof:
+    lin(x)
+print(prof.key_averages().table(row_limit=6))

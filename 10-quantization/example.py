@@ -80,3 +80,31 @@ with torch.no_grad():
     ref = lin(xin)
     approx = torch.nn.functional.linear(xin, Wq.dequantize(), lin.bias)
 print("int8 가중치 출력 상대오차:", ((ref - approx).norm() / ref.norm()).item())
+
+
+# ---- 10장 초보자 보강: 256칸 자(scale/zero_point), weight-only, PTQ 보정 ----
+if __name__ == "__main__":
+    import torch
+    torch.manual_seed(0)
+    x = torch.tensor([-1.0, 0.0, 0.3, 2.5])
+    scale = (x.max() - x.min()) / 255
+    zp = int(torch.round(-x.min() / scale)) - 128
+    q = torch.clamp(torch.round(x / scale) + zp, -128, 127).to(torch.int8)
+    print("scale, zp, q:", round(scale.item(), 5), zp, q.tolist())
+    print("dequant:", [round(v, 3) for v in ((q.float() - zp) * scale).tolist()])
+
+    lin = torch.nn.Linear(256, 256)
+    W = lin.weight.data
+    s = W.abs().amax(1, keepdim=True) / 127
+    Wq = torch.round(W / s).clamp(-127, 127).to(torch.int8)
+    print("weight bytes:", W.numel() * 4, "->", Wq.numel() + s.numel() * 4)
+    xx = torch.randn(8, 256)
+    with torch.no_grad():
+        y = lin(xx); y2 = xx @ (Wq.float() * s).T + lin.bias
+    print("weight-only rel err:", ((y - y2).norm() / y.norm()).item())
+
+    with torch.no_grad():  # PTQ calibration: 샘플 10묶음으로 activation 범위 측정
+        acts = [torch.relu(lin(torch.randn(8, 256))) for _ in range(10)]
+    lo = min(a.min() for a in acts).item(); hi = max(a.max() for a in acts).item()
+    a_scale = (hi - lo) / 255; a_zp = int(round(-lo / a_scale)) - 128
+    print("calibrated act range, scale, zp:", (round(lo, 3), round(hi, 3)), round(a_scale, 5), a_zp)

@@ -122,3 +122,30 @@ describe("permute", x.permute(2, 0, 1))
 describe("unsqueeze", x.unsqueeze(0))
 describe("expand", torch.ones(1, 4).expand(3, 4))
 describe("contig", x.permute(2, 0, 1).contiguous())
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31) ----
+print("\n== 0. 메모리는 한 줄 ==")
+x = torch.tensor([[0., 1., 2.], [3., 4., 5.]])
+print(x.flatten())
+print("x[1,2,3] in (2,3,4):", torch.arange(24.).reshape(2, 3, 4)[1, 2, 3].item())
+
+print("\n== 복사 판단 ==")
+x = torch.arange(6.).reshape(2, 3)
+print((x + 1).data_ptr() == x.data_ptr(), x.t().data_ptr() == x.data_ptr())
+
+print("\n== NHWC -> NCHW ==")
+imgs = torch.rand(8, 32, 32, 3)
+chw = imgs.permute(0, 3, 1, 2)
+print(chw.shape, chw.is_contiguous())
+print(torch.nn.Conv2d(3, 16, 3)(chw).shape)
+print(chw.reshape(8, -1).shape)
+
+print("\n== 자주 보는 에러 ==")
+print(torch.arange(6.).reshape(2, 3).t().reshape(6))
+lin = torch.nn.Linear(3, 1)
+try:
+    lin(torch.randn(2, 3, dtype=torch.float16))
+except RuntimeError as e:
+    print("dtype 에러:", str(e)[:60])
+print(lin(torch.randn(2, 3, dtype=torch.float16).float()).dtype)

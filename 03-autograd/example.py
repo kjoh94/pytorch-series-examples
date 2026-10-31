@@ -96,3 +96,28 @@ t = torch.tensor([1., 2., 3.], requires_grad=True)
 Square.apply(t).sum().backward()
 print(t.grad)                       # tensor([2., 4., 6.])
 print(torch.autograd.gradcheck(Square.apply, torch.randn(3, dtype=torch.double, requires_grad=True)))
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31) ----
+print("\n== gradient = 기울기 ==")
+w = torch.tensor(2.0, requires_grad=True)
+loss = w ** 2
+loss.backward()
+print(w.grad)
+with torch.no_grad():
+    w -= 0.1 * w.grad
+print(w)
+
+print("\n== 검증 / 추론 패턴 ==")
+model = nn.Sequential(nn.Linear(4, 8), nn.Dropout(0.2), nn.Linear(8, 1))
+loss_fn = nn.MSELoss()
+x_val, y_val = torch.randn(16, 4), torch.randn(16, 1)
+model.eval()
+with torch.no_grad():
+    val_loss = loss_fn(model(x_val), y_val)
+model.train()
+print("val_loss:", round(val_loss.item(), 4), "grad_fn:", val_loss.grad_fn)
+model.eval()
+with torch.inference_mode():
+    pred = model(x_val)
+print(pred.shape, pred.is_inference())

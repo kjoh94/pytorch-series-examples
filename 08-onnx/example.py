@@ -55,3 +55,36 @@ class Branchy(torch.nn.Module):
 
 ep = torch.export.export(Branchy(), (torch.randn(3),))
 print([str(n.target) for n in ep.graph.nodes if n.op == "call_function"])  # cond 가 그래프에 남는다
+
+
+# ---- 8장 초보자 보강: 빈칸(batch) 있는 ONNX 저장 → PyTorch 없이 실행 → 숫자 비교 ----
+# 필요: pip install onnx onnxruntime onnxscript
+if __name__ == "__main__":
+    import os, tempfile
+    import numpy as np
+    import torch
+    try:
+        import onnx, onnxruntime as ort
+    except ImportError:
+        print("skip: pip install onnx onnxruntime onnxscript")
+    else:
+        class Tiny(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.fc = torch.nn.Linear(3, 2)
+            def forward(self, x):
+                return torch.relu(self.fc(x))
+        m = Tiny().eval()
+        batch = torch.export.Dim("batch", min=1, max=64)
+        path = os.path.join(tempfile.gettempdir(), "tiny.onnx")
+        torch.onnx.export(m, (torch.randn(4, 3),), dynamo=True,
+                          dynamic_shapes={"x": {0: batch}}).save(path)
+        g = onnx.load(path)
+        print("ops:", [n.op_type for n in g.graph.node],
+              "opset:", [o.version for o in g.opset_import if o.domain == ""])
+        sess = ort.InferenceSession(path)
+        name = sess.get_inputs()[0].name
+        for bs in (4, 7):
+            x = torch.randn(bs, 3)
+            out = sess.run(None, {name: x.numpy()})[0]
+            print("batch", bs, out.shape, "max diff", float(np.abs(out - m(x).detach().numpy()).max()))

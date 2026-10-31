@@ -90,3 +90,13 @@ def my_backend(gm: torch.fx.GraphModule, example_inputs):
     return gm.forward                  # 여기서 내 장치용 코드로 바꾸면 된다
 f = torch.compile(lambda x: torch.relu(x @ x.T) + 1, backend=my_backend)
 print(f(torch.randn(4, 4)).shape)
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31): 1단계 '이름 붙이기'만 해 보기 ----
+# 주의: 위쪽 예제에서 이미 이름을 붙였다면 이 블록은 건너뛴다
+print("\n== 1단계: 이름 붙이기 ==")
+print("현재 이름:", torch._C._get_privateuse1_backend_name())
+if torch._C._get_privateuse1_backend_name() == "privateuseone":
+    torch.utils.rename_privateuse1_backend("mydev")
+name = torch._C._get_privateuse1_backend_name()
+print(torch.device(f"{name}:0"))

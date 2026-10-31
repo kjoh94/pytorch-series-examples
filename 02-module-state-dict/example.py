@@ -119,3 +119,23 @@ print(acts)
 for h in hs: h.remove()
 
 print(model2.training, model2.block[1].training)   # False False — eval()은 재귀로 전파
+
+
+# ---- 추가 (초보자용 개편, 2026-10-31) ----
+print("\n== Linear 안의 숫자 ==")
+lin = nn.Linear(4, 8)
+print(lin.weight.shape, lin.bias.shape, sum(p.numel() for p in lin.parameters()))
+print(type(lin.weight).__name__, lin.weight.requires_grad)
+print(sum(p.numel() for p in nn.Sequential(nn.Linear(2, 4), nn.ReLU(), nn.Linear(4, 1)).parameters()))  # 17
+
+print("\n== 체크포인트 (학습 이어하기) ==")
+import os, tempfile
+cpath = os.path.join(tempfile.mkdtemp(), "ckpt.pt")
+model = Net()
+opt = torch.optim.Adam(model.parameters(), lr=1e-3)
+loss = model(torch.randn(8, 4)).pow(2).mean(); loss.backward(); opt.step()
+torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "epoch": 3}, cpath)
+model2 = Net(); opt2 = torch.optim.Adam(model2.parameters(), lr=1e-3)
+c = torch.load(cpath, weights_only=True)
+model2.load_state_dict(c["model"]); opt2.load_state_dict(c["opt"])
+print("이어서 시작할 epoch:", c["epoch"] + 1)

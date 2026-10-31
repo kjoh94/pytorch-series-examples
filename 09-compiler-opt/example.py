@@ -79,3 +79,18 @@ for name, (s, e) in sorted(life.items(), key=lambda kv: kv[1][0]):
         assign[name] = len(free_at); free_at.append(e)
 print("수명:", life)
 print("버퍼 배정:", assign, "→ 버퍼", len(free_at), "개 (텐서", len(life), "개)")
+
+
+# ---- 9장 초보자 보강: 계산량보다 메모리 훑기 횟수가 시간을 정한다 (g++ 불필요) ----
+if __name__ == "__main__":
+    import time
+    import torch
+    torch.set_num_threads(1)
+    x = torch.randn(16_000_000)  # 64MB
+    def t(f, n=5):
+        f(); s = time.perf_counter()
+        for _ in range(n): f()
+        return (time.perf_counter() - s) / n * 1000
+    print(f"add (1 pass)            : {t(lambda: x.add(1)):.1f} ms")
+    print(f"sin (1 pass, heavy math): {t(lambda: torch.sin(x)):.1f} ms")
+    print(f"x*2+1 -> relu (3 passes): {t(lambda: torch.relu(x * 2 + 1)):.1f} ms")

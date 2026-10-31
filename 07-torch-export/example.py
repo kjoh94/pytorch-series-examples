@@ -38,3 +38,29 @@ except Exception as e:
 torch.export.save(ep_dyn, "mlp.pt2")
 loaded = torch.export.load("mlp.pt2")
 print(loaded.module()(torch.randn(5, 3)).shape)
+
+
+# ---- 7장 초보자 보강: 작은 export, 이름표, 저장/불러오기, 고정 크기 함정 ----
+if __name__ == "__main__":
+    import os, tempfile
+    import torch
+
+    class Tiny(torch.nn.Module):
+        def __init__(self):
+            super().__init__()
+            self.fc = torch.nn.Linear(3, 2)
+        def forward(self, x):
+            return torch.relu(self.fc(x))
+
+    ep = torch.export.export(Tiny(), (torch.randn(4, 3),))
+    print("ops:", [str(n.target) for n in ep.graph.nodes if n.op == "call_function"])
+    print("signature:", [(s.kind.name, s.arg.name) for s in ep.graph_signature.input_specs])
+    print("core aten:", [str(n.target) for n in ep.run_decompositions().graph.nodes if n.op == "call_function"])
+    path = os.path.join(tempfile.gettempdir(), "tiny.pt2")
+    torch.export.save(ep, path)
+    x = torch.randn(4, 3)
+    print("save/load same:", torch.allclose(torch.export.load(path).module()(x), ep.module()(x)))
+    try:
+        ep.module()(torch.randn(5, 3))
+    except Exception as e:
+        print("fixed-size trap:", type(e).__name__, str(e)[:60])

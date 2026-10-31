@@ -24,7 +24,7 @@ def _(a, b, alpha):
 def f(a, b):
     return scaled_add(a, b, 0.5).relu()
 
-cf = torch.compile(f, fullgraph=True)
+cf = torch.compile(f, fullgraph=True, backend="aot_eager")  # 기본 Inductor는 g++ 필요; aot_eager로도 fake 커널 경로를 검증
 print("compile:", torch.allclose(cf(x, y), f(x, y)))
 
 class M(torch.nn.Module):
@@ -59,3 +59,26 @@ def _(a, b, alpha):
     print("  (CPU 전용 커널 호출)")
     return torch.add(a, b, alpha=alpha)
 print(scaled_add(torch.ones(2), torch.ones(2), 4.0))
+
+
+# ---- 12장 초보자 보강: 가장 작은 커스텀 op 등록 → export 그래프에 한 덩어리로 ----
+if __name__ == "__main__":
+    import torch
+
+    @torch.library.custom_op("easy::shrink", mutates_args=())
+    def shrink(x: torch.Tensor, t: float) -> torch.Tensor:
+        return torch.where(x.abs() > t, x - t * x.sign(), torch.zeros_like(x))
+
+    @shrink.register_fake
+    def _(x, t):
+        return torch.empty_like(x)
+
+    x = torch.tensor([-2.0, -0.3, 0.1, 1.5])
+    print("shrink:", torch.ops.easy.shrink(x, 0.5))
+
+    class M(torch.nn.Module):
+        def forward(self, x):
+            return torch.ops.easy.shrink(x * 2, 0.5)
+
+    ep = torch.export.export(M(), (x,))
+    print("export graph:", [str(n.target) for n in ep.graph.nodes if n.op == "call_function"])
